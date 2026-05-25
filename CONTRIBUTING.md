@@ -5,13 +5,12 @@ We treat this repo as "Open Source" within Redis: anyone who clears the bar belo
 ## Local setup
 
 ```bash
-git clone git@github.com:redis-performance/redis_exporter.git
-cd redis_exporter
-go build .
-./redis_exporter --version
+git clone git@github.com:redis-performance/redis-mixed-bench.git
+cd redis-mixed-bench
+npm install
 ```
 
-Go 1.20 or later is required. Dependencies are managed with Go modules; running `go build .` will fetch them automatically.
+Requires **Node.js 18 or later** and **npm**. TypeScript is compiled via the `tsc` build step; `ts-node` is available as a dev dependency for running without a prior build step.
 
 ## Branch naming
 
@@ -21,13 +20,14 @@ Go 1.20 or later is required. Dependencies are managed with Go modules; running 
 
 Types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`
 
-Example: `feat/add-pipeline-mode`
+Example: `feat/add-cluster-mode`
 
 ## Coding standards
 
 - Keep changes focused; one logical change per PR.
-- Follow the conventions already present in the codebase (formatting, naming, error handling).
+- Follow the conventions already present in the codebase (TypeScript strict mode, formatting via Prettier).
 - No dead code, no commented-out blocks.
+- Format code before committing: `npm run format`
 
 ## Submitting changes
 
@@ -38,33 +38,26 @@ Example: `feat/add-pipeline-mode`
 
 ## Testing
 
-- All new behaviour must be covered by tests.
-- Existing tests must pass: run the test suite locally before opening a PR.
-- Coverage should not decrease.
-
-The test suite requires running Redis instances (multiple versions). The easiest way to spin them up is via Docker Compose:
+The project does not yet have a unit test suite. Validate your changes by running the benchmark manually against a local Redis instance:
 
 ```bash
-# Start all Redis containers used by the tests
-docker-compose -f contrib/docker-compose-for-tests.yml up -d
+# Install dependencies
+npm install
 
-# Run the full test suite (inside the container that has all URIs pre-set)
-make docker-test
+# Build TypeScript
+npm run build
 
-# Or, if the Redis instances are already reachable, run tests directly:
-go test -v -covermode=atomic -cover -race -coverprofile=coverage.txt -p 1 ./...
+# Run a quick smoke test against Redis on localhost:6379
+node dist/bin/bench-mixed.js --clients=2 --test-time=5
+
+# Or use ts-node directly (no build step required)
+./scripts/run-bench-mixed.sh 1 --clients=2 --test-time=5
 ```
 
-Static checks and formatting:
-
-```bash
-go vet ./...
-make checks   # verifies gofmt compliance
-make lint     # runs golangci-lint (requires golangci-lint installed)
-```
+Ensure the benchmark starts, reports progress, and exits cleanly before opening a PR.
 
 ## Review process
 
 - At least one maintainer approval is required before merge.
 - CI must be green.
-- Maintainers may request changes or close PRs that don't meet the bar — this is normal and not personal.
+- Maintainers may request changes or close PRs that do not meet the bar — this is normal and not personal.
